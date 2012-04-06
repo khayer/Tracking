@@ -2,36 +2,38 @@
 
 import cv, time
 from numpy import *
+from sys import stdout
 
 class Target:
 
     def __init__(self):
         #self.capture = cv.CaptureFromCAM(0)
         self.capture = cv.CaptureFromFile("/Users/hayer/github/Tracking/mouse1-Zeromaze.m4v")
+        self._numframes = cv.GetCaptureProperty(self.capture,cv.CV_CAP_PROP_FRAME_COUNT)
         cv.NamedWindow("Target", 1)
+        print self._numframes
 
     def run(self):
 
 
-
+        #future = time.time() + 300
         # Capture first frame to get size
         frame = cv.QueryFrame(self.capture)
         frame_size = cv.GetSize(frame)
         # Preparing files
-        color_image = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        grey_image = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_8U, 1)
-        moving_average = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F, 3)
-        tmp_image_open_arms = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        tmp_image_closed_arms = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        empty_image = cv.LoadImageM("/Users/hayer/github/Tracking/empty.png")
+        color_image = cv.CreateImage(frame_size, 8, 3)
+        grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
+        moving_average = cv.CreateImage(frame_size, cv.IPL_DEPTH_32F, 3)
+        tmp_image_open_arms = cv.CreateImage(frame_size, 8, 1)
+        tmp_image_closed_arms = cv.CreateImage(frame_size, 8, 1)
+
         time_on_open_arm = 0
         start = 0
         end = 0
         # 2. No. of transitions from closed-> open
         number_of_transitions = 0
         distance_open_arm = 0
-        #closest_to_left = cv.GetSize(frame)[0]
-        #closest_to_right = cv.GetSize(frame)[1]
+
         first = True
         is_open_arm = False
 
@@ -143,10 +145,24 @@ class Target:
 
 
 
-
-
-
-        while True:
+        #jetzt = time.time()
+        frame_number = range(1,int(math.ceil(self._numframes)))
+        for i in frame_number:
+        #while True:
+            #print time.time() - jetzt
+            #jetzt = time.time()
+            #if time.time() > future:
+            #    print distance, " pixel"
+            #    print distance / 108.78 , " inches"
+            #    print (distance / 108.78) * 2.54 , " cm"
+            #    print time_on_open_arm , " s spent on open arm"
+            #    print number_of_transitions , " transitions from closed->open"
+            #    print distance_open_arm , " distance on open arm"
+            #    if time_on_open_arm == 0:
+            #        print "Speed in open arm not available"
+            #    else:
+            #        print distance_open_arm / time_on_open_arm, " speed in pixel per second"
+            #    break
             color_image = cv.QueryFrame(self.capture)
 
             cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),imgblue) # Select a range of blue color
@@ -156,8 +172,8 @@ class Target:
             #cv.Erode(imggray, imggray, None, 4)
             #cv.Dilate(imggray, imggray, None, 10)
 
-            cv.ShowImage("HUHU", imgblue)
-            cv.ShowImage("HIHI", imggray)
+            #cv.ShowImage("HUHU", imgblue)
+            #cv.ShowImage("HIHI", imggray)
 
 
             # Smooth to get rid of false positives
@@ -167,7 +183,6 @@ class Target:
 
             if first:
                 difference = cv.CloneImage(color_image)
-                difff = cv.CloneImage(color_image)
                 temp = cv.CloneImage(color_image)
                 cv.ConvertScale(color_image, moving_average, 1.0, 0.0)
                 first = False
@@ -186,10 +201,6 @@ class Target:
             #cv.SaveImage("/Users/hayer/github/Tracking/04_difference.png", difference)
 
 
-            #### Difference between current and empty
-            cv.AbsDiff(color_image, empty_image, difff)
-            #cv.CvtColor(difff, difff, cv.CV_RGB2GRAY)
-            cv.ShowImage("HAHA", difff)
             # Convert the image to grayscale.
             cv.CvtColor(difference, grey_image, cv.CV_RGB2GRAY)
             #cv.SaveImage("/Users/hayer/github/Tracking/05_grey_image.png", grey_image)
@@ -206,9 +217,9 @@ class Target:
             cv.Erode(grey_image, grey_image, None, 10)
             #cv.SaveImage("/Users/hayer/github/Tracking/08_grey_image_erode.png", grey_image)
             cv.And(grey_image, open_arms, tmp_image_open_arms)
-            cv.ShowImage("HaHa", tmp_image_open_arms)
+            ##cv.ShowImage("HaHa", tmp_image_open_arms)
             cv.And(grey_image, closed_arms, tmp_image_closed_arms)
-            cv.ShowImage("HeHe", tmp_image_closed_arms)
+            #cv.ShowImage("HeHe", tmp_image_closed_arms)
             storage = cv.CreateMemStorage(0)
             contour = cv.FindContours(grey_image, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
             points = []
@@ -246,7 +257,7 @@ class Target:
 #
                 if contour2 and not is_open_arm:
                     area = cv.ContourArea(contour2)
-                    print area
+                    #print area
                     if area > 1800:
                         is_open_arm = True
                         start = time.time()
@@ -255,14 +266,15 @@ class Target:
                 if is_open_arm:
                     storage2 = cv.CreateMemStorage(0)
                     contour2 = cv.FindContours(tmp_image_closed_arms, storage2, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
-                    if contour2 :
+                    if contour2:
                         area = cv.ContourArea(contour2)
-                        print area
+                        #print area
                         if area > 800:
                             is_open_arm = False
                             end = time.time()
-                            print end - start
+                            #print end - start
                             time_on_open_arm += end-start
+                            #print "+1"
 
 
             if len(points):
@@ -287,79 +299,98 @@ class Target:
                 center_point_old = center_point
 
 
-            cv.Rectangle(color_image,
-                (car_rect[0], car_rect[1]),
-                (car_rect[0] + car_rect[2], car_rect[1] + car_rect[3]),
-                (255,0,0),
-                1,
-                8,
-                0)
-
-            cv.Circle(color_image,
-              (car_rect[0], car_rect[1]),
-              20,
-              (0, 0, 255),
-              -1,
-              8,
-              0)
-
-            cv.Circle(color_image,
-              (car_rect[0] + car_rect[2], car_rect[1] + car_rect[3]),
-              20,
-              (0, 0, 255),
-              -1,
-              8,
-              0)
-
-            cv.Rectangle(color_image,
-                (car_rect2[0], car_rect2[1]),
-                (car_rect2[0] + car_rect2[2], car_rect2[1] + car_rect2[3]),
-                (255,0,0),
-                1,
-                8,
-                0)
-
-            cv.Circle(color_image,
-              (car_rect2[0], car_rect2[1]),
-              20,
-              (0, 0, 255),
-              -1,
-              8,
-              0)
-
-            cv.Circle(color_image,
-              (car_rect2[0] + car_rect2[2], car_rect2[1] + car_rect2[3]),
-              20,
-              (0, 0, 255),
-              -1,
-              8,
-              0)
-
+            #cv.Rectangle(color_image,
+            #    (car_rect[0], car_rect[1]),
+            #    (car_rect[0] + car_rect[2], car_rect[1] + car_rect[3]),
+            #    (255,0,0),
+            #    1,
+            #    8,
+            #    0)
+#
+            #cv.Circle(color_image,
+            #  (car_rect[0], car_rect[1]),
+            #  20,
+            #  (0, 0, 255),
+            #  -1,
+            #  8,
+            #  0)
+#
+            #cv.Circle(color_image,
+            #  (car_rect[0] + car_rect[2], car_rect[1] + car_rect[3]),
+            #  20,
+            #  (0, 0, 255),
+            #  -1,
+            #  8,
+            #  0)
+#
+            #cv.Rectangle(color_image,
+            #    (car_rect2[0], car_rect2[1]),
+            #    (car_rect2[0] + car_rect2[2], car_rect2[1] + car_rect2[3]),
+            #    (255,0,0),
+            #    1,
+            #    8,
+            #    0)
+#
+            #cv.Circle(color_image,
+            #  (car_rect2[0], car_rect2[1]),
+            #  20,
+            #  (0, 0, 255),
+            #  -1,
+            #  8,
+            #  0)
+#
+            #cv.Circle(color_image,
+            #  (car_rect2[0] + car_rect2[2], car_rect2[1] + car_rect2[3]),
+            #  20,
+            #  (0, 0, 255),
+            #  -1,
+            #  8,
+            #  0)
+#
 
 
             cv.ShowImage("Target", color_image)
             #if k == 100:
             #    exit()
 
-            # Proplems to solve:
+            # Problems to solve:
             # 1) Time spent on the open arm
             # 2) No. of transitions from closed arm
             # 3) Speed of the mouse in the open arm
-            # 4) Total distance travelled
+            # 4) Total distance traveled
 
 
             #k += 1
             # Listen for ESC key
+            percent = int(100/self._numframes * i)
+            l = percent / 2
+            if l%2==0:
+                stdout.write("\r[%-50s] %d%%" % ('='*int(l), percent))
+                stdout.flush()
             c = cv.WaitKey(7) % 0x100
             if c == 27:
-                print distance, " pixel"
-                print distance / 108.78 , " inches"
-                print (distance / 108.78) * 2.54 , " cm"
-                print time_on_open_arm , " s spent on open arm"
-                print number_of_transitions , " transitions from closed->open"
-                print distance_open_arm , " distance on open arm"
-                print distance_open_arm / time_on_open_arm, " speed in pixel per second"
                 break
+            #    print distance, " pixel"
+            #    print distance / 108.78 , " inches"
+            #    print (distance / 108.78) * 2.54 , " cm"
+            #    print time_on_open_arm , " s spent on open arm"
+            #    print number_of_transitions , " transitions from closed->open"
+            #    print distance_open_arm , " distance on open arm"
+            #    print distance_open_arm / time_on_open_arm, " speed in pixel per second"
+            #    break
+
+        stdout.write("\r[%-50s] %d%%\n" % ('='*50, 100))
+        #stdout.flush()
+        print distance, " total distance traveled in pixel"
+        #print distance / 108.78 , " inches"
+        #print (distance / 108.78) * 2.54 , " cm"
+        print time_on_open_arm , " s spent on open arm"
+        print number_of_transitions , " transitions from closed->open"
+        print distance_open_arm , " distance on open arm"
+        if time_on_open_arm == 0:
+            print "Speed in open arm not available"
+        else:
+            print distance_open_arm / time_on_open_arm, " speed in pixel per second"
 
     ######### METHODS #########
     def in_rectangle(point, rec1, rec2):
