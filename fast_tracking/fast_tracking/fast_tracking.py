@@ -200,12 +200,12 @@ class Target:
 
         frame_number = 0
         percent_in_video = 0
-        while percent_in_video < 1:
-        #while frame_number < cv.GetCaptureProperty(self.capture,cv.CV_CAP_PROP_FRAME_COUNT):
-        #    cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
+        #while percent_in_video < 1:
+        while frame_number < cv.GetCaptureProperty(self.capture,cv.CV_CAP_PROP_FRAME_COUNT):
+            cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             color_image = cv.QueryFrame(self.capture)
             percent_in_video = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_AVI_RATIO)
-        #    frame_number += 2
+            frame_number += 2
             #print percent_in_video
             #k = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
             #print k

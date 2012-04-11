@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import cv, time
+import cv
 from numpy import *
 from sys import *
 import os
@@ -11,22 +11,17 @@ cwd = os.getcwd() + "/"
 class Target:
 
     def __init__(self,inputs):
-        #self.capture = cv.CaptureFromCAM(0)
-        #print inputs
+        ### WHAT IF INPUTS IS FULL PATH ?
+        # Video
         self.capture = cv.CaptureFromFile(cwd+inputs[1])
-        cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_FPS,15)
+        # Prepared image to distinguish open and closed arm
         self.image = cv.LoadImageM(cwd+inputs[2])
-        #self.capture = cv.CaptureFromFile("/Users/hayer/github/Tracking/225.m4v")
-        #self.image = cv.LoadImageM("/Users/hayer/github/Tracking/foo.png")
-        self._numframes = cv.GetCaptureProperty(self.capture,cv.CV_CAP_PROP_FRAME_COUNT)
+        # How big is the mouse ?
         self.mouse_area = self.get_mouse_area()
-        print self.mouse_area
-        cv.NamedWindow("Target", 1)
-        #print self._numframes
+
 
     def get_mouse_area(self):
         frame = cv.QueryFrame(self.capture)
-        #print frame
         k = cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 10000)
         frame_size = cv.GetSize(frame)
 
@@ -39,22 +34,14 @@ class Target:
 
         areas = zeros(1000)
 
-
-
-
         for i in range(1,1000):
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
-
             color_image = cv.QueryFrame(self.capture)
-            #k = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
-            #print k
+
             cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
             cv.Erode(black_mouse, black_mouse, None, 4)
             cv.Dilate(black_mouse, black_mouse, None, 10)
 
-            #cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
-            #cv.Erode(black_mouse, black_mouse, None, 4)
-            #cv.Dilate(black_mouse, black_mouse, None, 10)
             if first:
                 difference = cv.CloneImage(color_image)
                 temp = cv.CloneImage(color_image)
@@ -64,8 +51,8 @@ class Target:
                 cv.RunningAvg(color_image, moving_average, 0.0005, None)
 
             # Smooth to get rid of false positives
-
             cv.Smooth(color_image, color_image, cv.CV_GAUSSIAN, 3, 0)
+
             cv.RunningAvg(color_image, moving_average, 0.0005, None)
             # Convert the scale of the moving average.
             cv.ConvertScale(moving_average, temp, 1.0, 0.0)
@@ -73,16 +60,11 @@ class Target:
             cv.AbsDiff(color_image, temp, difference)
             # Convert the image to grayscale.
             cv.CvtColor(difference, grey_image, cv.CV_RGB2GRAY)
-            ### Where do both pictures overlap
-            #cv.And(grey_image, black_mouse, grey_image)
             # Convert the image to black and white.
             cv.Threshold(grey_image, grey_image, 90, 255, cv.CV_THRESH_BINARY)
             # Dilate and erode to get people blobs
             cv.And(grey_image, black_mouse, grey_image)
-            #cv.Erode(grey_image, grey_image, None, 3)
-            #cv.Dilate(grey_image, grey_image, None, 5)
-            #cv.ShowImage("LALA", grey_image)
-            #cv.ShowImage("LALe", color_image)
+
             storage = cv.CreateMemStorage(0)
             contour = cv.FindContours(grey_image, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
             if contour:
@@ -200,12 +182,12 @@ class Target:
 
         frame_number = 0
         percent_in_video = 0
-        while percent_in_video < 1:
-        #while frame_number < cv.GetCaptureProperty(self.capture,cv.CV_CAP_PROP_FRAME_COUNT):
-        #    cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
+        #while percent_in_video < 1:
+        while frame_number < cv.GetCaptureProperty(self.capture,cv.CV_CAP_PROP_FRAME_COUNT):
+            cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             color_image = cv.QueryFrame(self.capture)
             percent_in_video = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_AVI_RATIO)
-        #    frame_number += 2
+            frame_number += 2
             #print percent_in_video
             #k = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
             #print k
