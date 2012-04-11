@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+import argparse
+
+def perfect_path(str):
+  try:
+    open(str)
+    return str
+  except:
+    msg = "%r could not be found!" % str
+    raise argparse.ArgumentTypeError(msg)
+
+
+parser = argparse.ArgumentParser(description='Analyze your zero-maze experiment.')
+parser.add_argument('files', metavar='files', type=perfect_path, nargs=2,
+                   help='your input files')
+parser.add_argument('--picture')
+parser.add_argument('--sum',
+                    help='sum the integers (default: find the max)')
+
+args = parser.parse_args()
+print args
+print args.files[0]
