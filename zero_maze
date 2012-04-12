@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+import argparse
+import os
+from fast_tracking.fast_tracking import *
+
+def perfect_path(str):
+  try:
+    open(str)
+    return os.path.abspath(str)
+  except:
+    msg = "%r could not be found!" % str
+    raise argparse.ArgumentTypeError(msg)
+
+
+parser = argparse.ArgumentParser(description="""Analyze your
+  zero-maze experiment.""")
+parser.add_argument('video', metavar='m4v/mpeg',
+  type=perfect_path, help=""" video that you want
+  to analyze """)
+parser.add_argument('image', metavar='png',
+  type=perfect_path, help=""" defines the position of the
+  open and closed area in the zero maze """)
+parser.add_argument('--picture')
+parser.add_argument('--sum',
+                    help='sum the integers (default: find the max)')
+
+args = parser.parse_args()
+print args
+
+
+t = Target(args.video, args.image)
+t.run()
