@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import cv, time
+import cv, time, itertools
 from numpy import *
 from sys import *
 
@@ -12,9 +12,38 @@ class Target:
         self._numframes = cv.GetCaptureProperty(self.capture,
             cv.CV_CAP_PROP_FRAME_COUNT)
         self.mouse_area = self.get_mouse_area()
+        print self.mouse_area
+
+    ######### METHODS #########
+
+    def distance_func(self, points):
+        p0, p1 = points            
+        return (p0[0] - p1[0])**2 + (p0[1] - p1[1])**2
+
+
+    def where_is_the_nose(self,max_pair, image ):
+        white_space = 0
+        for (x,y) in max_pair:
+            cv.SetImageROI(image, cv.CvRect(x-10, y-10, 20 , 20))
+            storage = cv.CreateMemStorage(0)
+            contour = cv.FindContours(image, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
+            if contour:
+                area = cv.ContourArea(contour)
+                if area > white_space:
+                    nose_coord = (x,y)
+            cv.ResetImageROI(image)
+        return nose_coord
+
+    #def distance(points):
+     #   p0, p1 = points
+      #  return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
+
+    ###########################
 
     def get_mouse_area(self):
         """ """
+
+        print "Calibration ..."
         frame = cv.QueryFrame(self.capture)
         frame_size = cv.GetSize(frame)
 
@@ -41,8 +70,10 @@ class Target:
             #k = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
             #print k
             cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
-            cv.Erode(black_mouse, black_mouse, None, 4)
-            cv.Dilate(black_mouse, black_mouse, None, 10)
+            cv.ShowImage("Mouse Color",black_mouse)
+            cv.Erode(black_mouse, black_mouse, None, 1)
+            cv.Dilate(black_mouse, black_mouse, None, 7)
+            cv.ShowImage("Mouse Color Rendered", black_mouse)
 
             #cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
             #cv.Erode(black_mouse, black_mouse, None, 4)
@@ -69,8 +100,10 @@ class Target:
             #cv.And(grey_image, black_mouse, grey_image)
             # Convert the image to black and white.
             cv.Threshold(grey_image, grey_image, 90, 255, cv.CV_THRESH_BINARY)
+            cv.ShowImage("Only Movement", grey_image)
             # Dilate and erode to get people blobs
             cv.And(grey_image, black_mouse, grey_image)
+            cv.ShowImage("Mix",grey_image)
             #cv.Erode(grey_image, grey_image, None, 3)
             #cv.Dilate(grey_image, grey_image, None, 5)
             #cv.ShowImage("LALA", grey_image)
@@ -82,7 +115,7 @@ class Target:
 
 
 
-            #c = cv.WaitKey(7) % 0x100
+            c = cv.WaitKey(7) % 0x100
 
 
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, i * 100)
@@ -95,20 +128,24 @@ class Target:
 
         areas = sort(areas)
         last_position_zeros = max(where(areas == 0)[0])
-        areas = areas[last_position_zeros:1000]
+        areas = areas[500:1000]
         #print mean(areas)
         #print median(areas)
         #print std(areas)
         stdout.write("\r[%-50s] %d%%\n" % ('='*50, 100))
         print "Preparing done"
+        c = cv.WaitKey(7) % 0x100
+        cv.DestroyWindow("Mix")
 
         #print areas
-        return [mean(areas)-std(areas), mean(areas)+std(areas)]
-
+        print mean(areas) 
+        #return [mean(areas)-3*std(areas), mean(areas)+std(areas)]
+        return [mean(areas)/5,mean(areas)+std(areas)]
 
     def run(self):
 
         frame = cv.QueryFrame(self.capture)
+        cv.ShowImage("Original",frame)
         k = cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 0)
         frame_size = cv.GetSize(frame)
 
@@ -203,8 +240,8 @@ class Target:
             #print k
 
             cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
-            cv.Erode(black_mouse, black_mouse, None, 4)
-            cv.Dilate(black_mouse, black_mouse, None, 10)
+            cv.Erode(black_mouse, black_mouse, None, 1)
+            cv.Dilate(black_mouse, black_mouse, None, 7)
 
             # Smooth to get rid of false positives
             cv.Smooth(color_image, color_image, cv.CV_GAUSSIAN, 3, 0)
@@ -240,9 +277,27 @@ class Target:
 
             storage = cv.CreateMemStorage(0)
             contour = cv.FindContours(grey_image, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
+            
+            # Draw Contour
+            cv.DrawContours(color_image,contour,cv.CV_RGB(255,255,0),cv.CV_RGB(50,203,60),1)
+            contour3 = contour
+            #print len(contour3)
+
+            if contour and len(contour) > 1:
+                #points = []
+                #for (x,y) in contour3:
+                #    print (x,y)
+                #    points += [(x,y)]
+    
+                # Points furthest away from each other
+                #print itertools.combinations(points, 2)
+                max_pair = max(itertools.combinations(contour, 2), key=self.distance_func)
+                print max_pair
+                cv.Line(color_image,max_pair[0],max_pair[1],cv.CV_RGB(255,255,0))
+                nose_coord = self.where_is_the_nose(max_pair,grey_image)
+                cv.Circle(color_image, nose_coord, 3, cv.CV_RGB(255,0,0), 1)
+
             points = []
-
-
             while contour:
                 bound_rect = cv.BoundingRect(list(contour))
                 contour = contour.h_next()
@@ -295,7 +350,10 @@ class Target:
                     # ==> 4)
                     dist = abs(array(center_point)-array(center_point_old))
                     distance += math.sqrt(dist[0]*dist[1])
-                    #cv.ShowImage("Target", color_image)
+
+                    
+
+                    cv.ShowImage("Target", color_image)
 
                 if is_open_arm:
                     distance_open_arm += math.sqrt(dist[0]*dist[1])
@@ -325,7 +383,7 @@ class Target:
             if l%2==0:
                stdout.write("\r[%-50s] %d%%" % ('='*int(l), percent))
                stdout.flush()
-            #c = cv.WaitKey(7) % 0x100
+            c = cv.WaitKey(7) % 0x100
 
             #if c == 27:
             #    print " "
@@ -369,7 +427,5 @@ class Target:
         else:
             print distance_open_arm / time_on_open_arm, " speed in pixel per second"
 
-    ######### METHODS #########
 
-    ###########################
 
