@@ -17,14 +17,15 @@ class Target:
     ######### METHODS #########
 
     def distance_func(self, points):
-        p0, p1 = points            
+        p0, p1 = points
         return (p0[0] - p1[0])**2 + (p0[1] - p1[1])**2
 
 
     def where_is_the_nose(self,max_pair, image ):
         white_space = 0
+        nose_coord = (0,0)
         for (x,y) in max_pair:
-            cv.SetImageROI(image, cv.CvRect(x-10, y-10, 20 , 20))
+            cv.SetImageROI(image, (x-20, y-20, 40 , 40))
             storage = cv.CreateMemStorage(0)
             contour = cv.FindContours(image, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
             if contour:
@@ -73,6 +74,8 @@ class Target:
             cv.ShowImage("Mouse Color",black_mouse)
             cv.Erode(black_mouse, black_mouse, None, 1)
             cv.Dilate(black_mouse, black_mouse, None, 7)
+            cv.Erode(black_mouse, black_mouse, None, 4)
+
             cv.ShowImage("Mouse Color Rendered", black_mouse)
 
             #cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
@@ -138,7 +141,7 @@ class Target:
         cv.DestroyWindow("Mix")
 
         #print areas
-        print mean(areas) 
+        print mean(areas)
         #return [mean(areas)-3*std(areas), mean(areas)+std(areas)]
         return [mean(areas)/5,mean(areas)+std(areas)]
 
@@ -240,8 +243,10 @@ class Target:
             #print k
 
             cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
+            #cv.Erode(black_mouse, black_mouse, None, 1)
             cv.Erode(black_mouse, black_mouse, None, 1)
             cv.Dilate(black_mouse, black_mouse, None, 7)
+            cv.Erode(black_mouse, black_mouse, None, 4)
 
             # Smooth to get rid of false positives
             cv.Smooth(color_image, color_image, cv.CV_GAUSSIAN, 3, 0)
@@ -277,7 +282,7 @@ class Target:
 
             storage = cv.CreateMemStorage(0)
             contour = cv.FindContours(grey_image, storage, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
-            
+
             # Draw Contour
             cv.DrawContours(color_image,contour,cv.CV_RGB(255,255,0),cv.CV_RGB(50,203,60),1)
             contour3 = contour
@@ -288,7 +293,7 @@ class Target:
                 #for (x,y) in contour3:
                 #    print (x,y)
                 #    points += [(x,y)]
-    
+
                 # Points furthest away from each other
                 #print itertools.combinations(points, 2)
                 max_pair = max(itertools.combinations(contour, 2), key=self.distance_func)
@@ -351,7 +356,7 @@ class Target:
                     dist = abs(array(center_point)-array(center_point_old))
                     distance += math.sqrt(dist[0]*dist[1])
 
-                    
+
 
                     cv.ShowImage("Target", color_image)
 
