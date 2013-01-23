@@ -390,6 +390,7 @@ class Target:
                stdout.flush()
             c = cv.WaitKey(7) % 0x100
 
+            # does not work...:
             #if c == 27:
             #    print " "
             #    print "Up to now: "
