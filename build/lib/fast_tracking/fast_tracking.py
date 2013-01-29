@@ -390,20 +390,21 @@ class Target:
                stdout.flush()
             c = cv.WaitKey(7) % 0x100
 
-            #if c == 27:
-            #    print " "
-            #    print "Up to now: "
-            #    print distance, " total distance traveled in pixel"
-            #    #print distance / 108.78 , " inches"
-            #    #print (distance / 108.78) * 2.54 , " cm"
-            #    print time_on_open_arm , " s spent on open arm"
-            #    print number_of_transitions , " transitions from closed->open"
-            #    print distance_open_arm , " distance on open arm"
-            #    if time_on_open_arm == 0:
-            #        print "Speed in open arm not available"
-            #    else:
-            #        print distance_open_arm / time_on_open_arm, " speed in pixel per second"
-            #    exit()
+            # does not work...:
+            if c == 27:
+                print " "
+                print "Up to now: "
+                print distance, " total distance traveled in pixel"
+                #print distance / 108.78 , " inches"
+                #print (distance / 108.78) * 2.54 , " cm"
+                print time_on_open_arm , " s spent on open arm"
+                print number_of_transitions , " transitions from closed->open"
+                print distance_open_arm , " distance on open arm"
+                if time_on_open_arm == 0:
+                    print "Speed in open arm not available"
+                else:
+                    print distance_open_arm / time_on_open_arm, " speed in pixel per second"
+                exit()
 
 
             #    print distance, " pixel"

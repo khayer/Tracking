@@ -64,7 +64,7 @@ class Target:
 
 
 
-        for i in range(1,1000):
+        for i in range(1,100):
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
 
             color_image = cv.QueryFrame(self.capture)
@@ -297,7 +297,7 @@ class Target:
                 # Points furthest away from each other
                 #print itertools.combinations(points, 2)
                 max_pair = max(itertools.combinations(contour, 2), key=self.distance_func)
-                print max_pair
+                #print max_pair
                 cv.Line(color_image,max_pair[0],max_pair[1],cv.CV_RGB(255,255,0))
                 nose_coord = self.where_is_the_nose(max_pair,grey_image)
                 cv.Circle(color_image, nose_coord, 3, cv.CV_RGB(255,0,0), 1)
@@ -388,23 +388,24 @@ class Target:
             if l%2==0:
                stdout.write("\r[%-50s] %d%%" % ('='*int(l), percent))
                stdout.flush()
-            c = cv.WaitKey(7) % 0x100
-
+            c = cv.WaitKey(10) 
+            #if (c != -1):
+                #if (ord(c) == 27):
             # does not work...:
-            #if c == 27:
-            #    print " "
-            #    print "Up to now: "
-            #    print distance, " total distance traveled in pixel"
-            #    #print distance / 108.78 , " inches"
-            #    #print (distance / 108.78) * 2.54 , " cm"
-            #    print time_on_open_arm , " s spent on open arm"
-            #    print number_of_transitions , " transitions from closed->open"
-            #    print distance_open_arm , " distance on open arm"
-            #    if time_on_open_arm == 0:
-            #        print "Speed in open arm not available"
-            #    else:
-            #        print distance_open_arm / time_on_open_arm, " speed in pixel per second"
-            #    exit()
+            if c != -1:
+                print " "
+                print "Up to now: "
+                print distance, " total distance traveled in pixel"
+                #print distance / 108.78 , " inches"
+                #print (distance / 108.78) * 2.54 , " cm"
+                print time_on_open_arm , " s spent on open arm"
+                print number_of_transitions , " transitions from closed->open"
+                print distance_open_arm , " distance on open arm"
+                if time_on_open_arm == 0:
+                    print "Speed in open arm not available"
+                else:
+                    print distance_open_arm / time_on_open_arm, " speed in pixel per second"
+                exit()
 
 
             #    print distance, " pixel"
