@@ -64,7 +64,7 @@ class Target:
 
 
 
-        for i in range(1,100):
+        for i in range(1,1000):
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
 
             color_image = cv.QueryFrame(self.capture)
@@ -146,6 +146,8 @@ class Target:
         return [mean(areas)/5,mean(areas)+std(areas)]
 
     def run(self):
+
+        start_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
 
         frame = cv.QueryFrame(self.capture)
         cv.ShowImage("Original",frame)
@@ -354,14 +356,18 @@ class Target:
                     #cv.Circle(color_image, (0,100), 10, cv.CV_RGB(255, 100, 0), 1)
                     # ==> 4)
                     dist = abs(array(center_point)-array(center_point_old))
-                    distance += math.sqrt(dist[0]*dist[1])
+                    if math.sqrt(dist[0]*dist[1]) > 3.0:
+                        distance += math.sqrt(dist[0]*dist[1])
+                        cv.Circle(color_image, center_point, 10, color, -1)
 
+                    
 
 
                     cv.ShowImage("Target", color_image)
 
                 if is_open_arm:
-                    distance_open_arm += math.sqrt(dist[0]*dist[1])
+                    if math.sqrt(dist[0]*dist[1]) > 3.0:
+                        distance_open_arm += math.sqrt(dist[0]*dist[1])
                 if center_point == (0,0):
                     center_point_old = point5
                 else:
@@ -386,26 +392,35 @@ class Target:
             percent = int(percent_in_video * 100)
             l = int(percent_in_video * 100 / 2)
             if l%2==0:
-               stdout.write("\r[%-50s] %d%%" % ('='*int(l), percent))
-               stdout.flush()
+               stderr.write("\r[%-50s] %d%%" % ('='*int(l), percent))
+               stderr.flush()
             c = cv.WaitKey(10) 
             #if (c != -1):
                 #if (ord(c) == 27):
             # does not work...:
             if c != -1:
+                end_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+                total_time = (end_total-start_total) / 1000
                 print " "
                 print "Up to now: "
                 print distance, " total distance traveled in pixel"
+                print total_time, " total length of experiment"
+                print distance/total_time, "average-speed of travel in s in pixel per second"
+                print "--- Closed arm ----------------------------------------"
+                print distance - distance_open_arm, "distance on closed arm"
+                print total_time - time_on_open_arm , " s spent on closed arm"
+                print (distance - distance_open_arm) / (total_time - time_on_open_arm), " speed in pixel per second"
                 #print distance / 108.78 , " inches"
                 #print (distance / 108.78) * 2.54 , " cm"
-                print time_on_open_arm , " s spent on open arm"
+                print "--- Open arm ----------------------------------------"
                 print number_of_transitions , " transitions from closed->open"
                 print distance_open_arm , " distance on open arm"
+                print time_on_open_arm , " s spent on open arm"
                 if time_on_open_arm == 0:
                     print "Speed in open arm not available"
                 else:
                     print distance_open_arm / time_on_open_arm, " speed in pixel per second"
-                exit()
+                break
 
 
             #    print distance, " pixel"
@@ -421,14 +436,24 @@ class Target:
             end = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
             time_on_open_arm += (end-start) / 1000
 
-        stdout.write("\r[%-50s] %d%%\n" % ('='*50, 100))
+        end_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+        total_time = (end_total-start_total) / 1000
+
+        stderr.write("\r[%-50s] %d%%\n" % ('='*50, 100))
         #stdout.flush()
         print distance, " total distance traveled in pixel"
+        print total_time, " total length of experiment"
+        print distance/total_time, "average-speed of travel in s in pixel per second"
+        print "--- Closed arm ----------------------------------------"
+        print distance - distance_open_arm, "distance on closed arm"
+        print total_time - time_on_open_arm , " s spent on closed arm"
+        print (distance - distance_open_arm) / (total_time - time_on_open_arm), " speed in pixel per second"
         #print distance / 108.78 , " inches"
         #print (distance / 108.78) * 2.54 , " cm"
-        print time_on_open_arm , " s spent on open arm"
+        print "--- Open arm ----------------------------------------"
         print number_of_transitions , " transitions from closed->open"
         print distance_open_arm , " distance on open arm"
+        print time_on_open_arm , " s spent on open arm"
         if time_on_open_arm == 0:
             print "Speed in open arm not available"
         else:
