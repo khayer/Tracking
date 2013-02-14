@@ -21,7 +21,8 @@ parser.add_argument('video', metavar='m4v/mpeg',
 parser.add_argument('image', metavar='png',
   type=perfect_path, help=""" defines the position of the
   open and closed area in the zero maze """)
-parser.add_argument('--picture')
+parser.add_argument('--picture',
+                    help='Not defined yet')
 parser.add_argument('--sum',
                     help='sum the integers (default: find the max)')
 

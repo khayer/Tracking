@@ -1,0 +1,13 @@
+Namespace(image='/Users/kat/Downloads/Material for Tracking/foo.png', picture=None, sum=None, video='/Users/kat/Downloads/Material for Tracking/538.m4v')
+total distance traveled in pixel	2522.107933
+total length of experiment	203.87
+average-speed of travel in s in pixel per second	12.3711577623
+--- Closed arm ----------------------------------------
+distance on closed arm	2124.80974411
+s spent on closed arm	163.806666667
+speed in pixel per second	12.9714485213
+--- Open arm ----------------------------------------
+transitions from closed->open	6
+distance on open arm	397.298188897
+s spent on open arm	40.0633333333
+speed in pixel per second	9.91675319654

@@ -1,0 +1,13 @@
+Namespace(image='/Users/kat/Downloads/Tracking2/01_color_image.png', picture=None, sum=None, video='/Users/kat/Downloads/Tracking2/mouse1-Zeromaze.m4v')
+total distance traveled in pixel	2805.82191397
+total length of experiment	200.766666667
+average-speed of travel in s in pixel per second	13.9755366792
+--- Closed arm ----------------------------------------
+distance on closed arm	2256.70686192
+s spent on closed arm	146.833333333
+speed in pixel per second	15.3691727259
+--- Open arm ----------------------------------------
+transitions from closed->open	7
+distance on open arm	549.11505205
+s spent on open arm	53.9333333333
+speed in pixel per second	10.1813668489

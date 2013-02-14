@@ -12,7 +12,8 @@ class Target:
         self._numframes = cv.GetCaptureProperty(self.capture,
             cv.CV_CAP_PROP_FRAME_COUNT)
         self.mouse_area = self.get_mouse_area()
-        print self.mouse_area
+        self.conversion = 11.75
+        print >> stderr, self.mouse_area
 
     ######### METHODS #########
 
@@ -44,13 +45,12 @@ class Target:
     def get_mouse_area(self):
         """ """
 
-        print "Calibration ..."
+        print >> stderr, "Calibration ..."
         frame = cv.QueryFrame(self.capture)
         frame_size = cv.GetSize(frame)
 
-        # Jump 10 second into video file
-        cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 10000)
-
+        # Jump 30 second into video file
+        cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 30000)
 
         color_image = cv.CreateImage(frame_size, 8, 3)
         grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
@@ -64,19 +64,22 @@ class Target:
 
 
 
-        for i in range(1,100):
+        for i in range(1,1000):
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
 
             color_image = cv.QueryFrame(self.capture)
+            #print frame_size
+            #cv.SaveImage('test_png_mouse.png',color_image)
+            #break
             #k = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
             #print k
             cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
-            cv.ShowImage("Mouse Color",black_mouse)
+            #cv.ShowImage("Mouse Color",black_mouse)
             cv.Erode(black_mouse, black_mouse, None, 1)
             cv.Dilate(black_mouse, black_mouse, None, 7)
             cv.Erode(black_mouse, black_mouse, None, 4)
 
-            cv.ShowImage("Mouse Color Rendered", black_mouse)
+            #cv.ShowImage("Mouse Color Rendered", black_mouse)
 
             #cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
             #cv.Erode(black_mouse, black_mouse, None, 4)
@@ -103,7 +106,7 @@ class Target:
             #cv.And(grey_image, black_mouse, grey_image)
             # Convert the image to black and white.
             cv.Threshold(grey_image, grey_image, 90, 255, cv.CV_THRESH_BINARY)
-            cv.ShowImage("Only Movement", grey_image)
+            #cv.ShowImage("Only Movement", grey_image)
             # Dilate and erode to get people blobs
             cv.And(grey_image, black_mouse, grey_image)
             cv.ShowImage("Mix",grey_image)
@@ -126,8 +129,8 @@ class Target:
             percent = i/10
             l = int(percent/2)
             if l%2==0:
-               stdout.write("\r[%-50s] %d%%" % ('='*int(l), percent))
-               stdout.flush()
+               stderr.write("\r[%-50s] %d%%" % ('='*int(l), percent))
+               stderr.flush()
 
         areas = sort(areas)
         last_position_zeros = max(where(areas == 0)[0])
@@ -135,22 +138,25 @@ class Target:
         #print mean(areas)
         #print median(areas)
         #print std(areas)
-        stdout.write("\r[%-50s] %d%%\n" % ('='*50, 100))
-        print "Preparing done"
+        stderr.write("\r[%-50s] %d%%\n" % ('='*50, 100))
+        print >> stderr, "Preparing done"
         c = cv.WaitKey(7) % 0x100
         cv.DestroyWindow("Mix")
 
         #print areas
-        print mean(areas)
+        print >> stderr, mean(areas)
         #return [mean(areas)-3*std(areas), mean(areas)+std(areas)]
         return [mean(areas)/5,mean(areas)+std(areas)]
 
     def run(self):
 
+        
+
         frame = cv.QueryFrame(self.capture)
         cv.ShowImage("Original",frame)
         k = cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 0)
         frame_size = cv.GetSize(frame)
+        start_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
 
         # Preparing files
         color_image = cv.CreateImage(frame_size, 8, 3)
@@ -354,14 +360,15 @@ class Target:
                     #cv.Circle(color_image, (0,100), 10, cv.CV_RGB(255, 100, 0), 1)
                     # ==> 4)
                     dist = abs(array(center_point)-array(center_point_old))
-                    distance += math.sqrt(dist[0]*dist[1])
-
-
+                    if math.sqrt(dist[0]*dist[1]) > 2.0:
+                        distance += math.sqrt(dist[0]*dist[1])
+                        cv.Circle(color_image, center_point, 10, color, -1)
 
                     cv.ShowImage("Target", color_image)
 
                 if is_open_arm:
-                    distance_open_arm += math.sqrt(dist[0]*dist[1])
+                    if math.sqrt(dist[0]*dist[1]) > 2.0:
+                        distance_open_arm += math.sqrt(dist[0]*dist[1])
                 if center_point == (0,0):
                     center_point_old = point5
                 else:
@@ -386,27 +393,35 @@ class Target:
             percent = int(percent_in_video * 100)
             l = int(percent_in_video * 100 / 2)
             if l%2==0:
-               stdout.write("\r[%-50s] %d%%" % ('='*int(l), percent))
-               stdout.flush()
+               stderr.write("\r[%-50s] %d%%" % ('='*int(l), percent))
+               stderr.flush()
             c = cv.WaitKey(10) 
             #if (c != -1):
                 #if (ord(c) == 27):
             # does not work...:
             if c != -1:
+                end_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+                total_time = (end_total-start_total) / 1000
                 print " "
                 print "Up to now: "
-                print distance, " total distance traveled in pixel"
+                print "total distance traveled in pixel\t", distance
+                print "total length of experiment\t", total_time 
+                print "average-speed of travel in s in pixel per second\t", distance/total_time
+                print "--- Closed arm ----------------------------------------"
+                print "distance on closed arm\t", distance - distance_open_arm 
+                print "s spent on closed arm\t", total_time - time_on_open_arm 
+                print "speed in pixel per second\t", (distance - distance_open_arm) / (total_time - time_on_open_arm) 
                 #print distance / 108.78 , " inches"
                 #print (distance / 108.78) * 2.54 , " cm"
-                print time_on_open_arm , " s spent on open arm"
-                print number_of_transitions , " transitions from closed->open"
-                print distance_open_arm , " distance on open arm"
+                print "--- Open arm ----------------------------------------"
+                print "transitions from closed->open\t", number_of_transitions 
+                print "distance on open arm\t", distance_open_arm 
+                print "s spent on open arm\t", time_on_open_arm 
                 if time_on_open_arm == 0:
                     print "Speed in open arm not available"
                 else:
-                    print distance_open_arm / time_on_open_arm, " speed in pixel per second"
-                exit()
-
+                    print "speed in pixel per second\t", distance_open_arm / time_on_open_arm
+                break
 
             #    print distance, " pixel"
             #    print distance / 108.78 , " inches"
@@ -421,18 +436,25 @@ class Target:
             end = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
             time_on_open_arm += (end-start) / 1000
 
-        stdout.write("\r[%-50s] %d%%\n" % ('='*50, 100))
+        end_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+        total_time = (end_total-start_total) / 1000
+
+        stderr.write("\r[%-50s] %d%%\n" % ('='*50, 100))
         #stdout.flush()
-        print distance, " total distance traveled in pixel"
+        print "total distance traveled in pixel\t", distance/self.conversion
+        print "total length of experiment\t", total_time 
+        print "average-speed of travel in s in pixel per second\t", (distance/self.conversion)/total_time
+        print "--- Closed arm ----------------------------------------"
+        print "distance on closed arm\t", (distance - distance_open_arm)/self.conversion
+        print "s spent on closed arm\t", total_time - time_on_open_arm 
+        print "speed in pixel per second\t", ((distance - distance_open_arm)/self.conversion) / (total_time - time_on_open_arm) 
         #print distance / 108.78 , " inches"
         #print (distance / 108.78) * 2.54 , " cm"
-        print time_on_open_arm , " s spent on open arm"
-        print number_of_transitions , " transitions from closed->open"
-        print distance_open_arm , " distance on open arm"
+        print "--- Open arm ----------------------------------------"
+        print "transitions from closed->open\t", number_of_transitions 
+        print "distance on open arm\t", distance_open_arm/self.conversion 
+        print "s spent on open arm\t", time_on_open_arm 
         if time_on_open_arm == 0:
             print "Speed in open arm not available"
         else:
-            print distance_open_arm / time_on_open_arm, " speed in pixel per second"
-
-
-
+            print "speed in pixel per second\t", (distance_open_arm/self.conversion) / time_on_open_arm

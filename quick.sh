@@ -1,0 +1,4 @@
+for i in {5..20}
+do
+  python zero_maze ../Downloads/Material\ for\ Tracking/mouse$i.m4v ../Downloads/Material\ for\ Tracking/foo.png > mouse$i.txt
+done
