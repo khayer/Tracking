@@ -12,6 +12,7 @@ class Target:
         self._numframes = cv.GetCaptureProperty(self.capture,
             cv.CV_CAP_PROP_FRAME_COUNT)
         self.mouse_area = self.get_mouse_area()
+        self.conversion = 11.75
         print >> stderr, self.mouse_area
 
     ######### METHODS #########
@@ -48,9 +49,8 @@ class Target:
         frame = cv.QueryFrame(self.capture)
         frame_size = cv.GetSize(frame)
 
-        # Jump 10 second into video file
-        cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 10000)
-
+        # Jump 30 second into video file
+        cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 30000)
 
         color_image = cv.CreateImage(frame_size, 8, 3)
         grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
@@ -68,6 +68,9 @@ class Target:
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
 
             color_image = cv.QueryFrame(self.capture)
+            #print frame_size
+            #cv.SaveImage('test_png_mouse.png',color_image)
+            #break
             #k = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
             #print k
             cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
@@ -147,12 +150,13 @@ class Target:
 
     def run(self):
 
-        start_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+        
 
         frame = cv.QueryFrame(self.capture)
         cv.ShowImage("Original",frame)
         k = cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 0)
         frame_size = cv.GetSize(frame)
+        start_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
 
         # Preparing files
         color_image = cv.CreateImage(frame_size, 8, 3)
@@ -437,20 +441,20 @@ class Target:
 
         stderr.write("\r[%-50s] %d%%\n" % ('='*50, 100))
         #stdout.flush()
-        print "total distance traveled in pixel\t", distance
+        print "total distance traveled in pixel\t", distance/self.conversion
         print "total length of experiment\t", total_time 
-        print "average-speed of travel in s in pixel per second\t", distance/total_time
+        print "average-speed of travel in s in pixel per second\t", (distance/self.conversion)/total_time
         print "--- Closed arm ----------------------------------------"
-        print "distance on closed arm\t", distance - distance_open_arm 
+        print "distance on closed arm\t", (distance - distance_open_arm)/self.conversion
         print "s spent on closed arm\t", total_time - time_on_open_arm 
-        print "speed in pixel per second\t", (distance - distance_open_arm) / (total_time - time_on_open_arm) 
+        print "speed in pixel per second\t", ((distance - distance_open_arm)/self.conversion) / (total_time - time_on_open_arm) 
         #print distance / 108.78 , " inches"
         #print (distance / 108.78) * 2.54 , " cm"
         print "--- Open arm ----------------------------------------"
         print "transitions from closed->open\t", number_of_transitions 
-        print "distance on open arm\t", distance_open_arm 
+        print "distance on open arm\t", distance_open_arm/self.conversion 
         print "s spent on open arm\t", time_on_open_arm 
         if time_on_open_arm == 0:
             print "Speed in open arm not available"
         else:
-            print "speed in pixel per second\t", distance_open_arm / time_on_open_arm
+            print "speed in pixel per second\t", (distance_open_arm/self.conversion) / time_on_open_arm
