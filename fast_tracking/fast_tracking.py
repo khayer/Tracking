@@ -171,6 +171,14 @@ class Target:
         number_of_transitions_open_closed = 0
         number_of_transitions_closed_open = 0
         distance_open_arm = 0
+        start_bouts = 0
+        end_bouts = 0
+        time_bout = 0
+        distance_bout = 0
+        distance_bout_open_arm = 0
+        start_bouts_open_arm = 0
+        end_bouts_open_arm = 0
+        time_bout_open_arm = 0
 
         first = True
         is_open_arm = False
@@ -242,6 +250,9 @@ class Target:
         #while percent_in_video < 1:
         #print self._numframes
         counter_for_bouts = 0
+        number_of_bouts = 0
+        bout_starts = True
+
         while frame_number < self._numframes:
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             color_image = cv.QueryFrame(self.capture)
@@ -364,19 +375,37 @@ class Target:
                     #cv.Circle(color_image, (0,100), 10, cv.CV_RGB(255, 100, 0), 1)
                     # ==> 4)
                     dist = abs(array(center_point)-array(center_point_old))
-                    if math.sqrt(dist[0]*dist[1]) > 2.0:
+                    if math.sqrt(dist[0]*dist[1]) > 3.0:
                         distance += math.sqrt(dist[0]*dist[1])
                         counter_for_bouts += 1
-                        if counter_for_bouts > 3:
+                        if counter_for_bouts > 4:
                             cv.Circle(color_image, center_point, 10, color, -1)
+                            distance_bout += math.sqrt(dist[0]*dist[1])
+                            if is_open_arm:
+                                distance_bout_open_arm += math.sqrt(dist[0]*dist[1])
+                            if bout_starts:
+                                number_of_bouts += 1
+                                bout_starts = False
+                                start_bouts = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+                                if is_open_arm:
+                                    start_bouts_open_arm = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                     else:
                         counter_for_bouts = 0
+                        if not bout_starts:
+                            end_bouts = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+                            time_bout += (end_bouts-start_bouts) / 1000
+                            end_bouts_open_arm = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+                            time_dummy = (end_bouts_open_arm - start_bouts_open_arm)
+                            if time_dummy > 0:
+                                time_bout_open_arm += time_dummy / 1000
+                        bout_starts = True
 
                     cv.ShowImage("Target", color_image)
 
                 if is_open_arm:
                     if math.sqrt(dist[0]*dist[1]) > 2.0:
                         distance_open_arm += math.sqrt(dist[0]*dist[1])
+
                 if center_point == (0,0):
                     center_point_old = point5
                 else:
@@ -469,4 +498,14 @@ class Target:
         print "transitions from closed->open\t", number_of_transitions_closed_open
         print "transitions from open->closed\t", number_of_transitions_open_closed
         print "--- Bouts ----------------------------------------"
-        print
+#  for zero maze - we can threshold time at 0.25sec. So any contiguous movement for longer than 0.25 sec will be recorded separately - these are called bouts/ambulatory movements. So for each bout recorded we can have the typical parameters like
+# (a) in open/closed arm
+# (b) average speed during that bout
+        print "Bouts in s in open arm\t", time_bout_open_arm
+        print "Speed in open arm\t", (distance_bout_open_arm/self.conversion)/time_bout_open_arm
+        time_bout_closed_arm = time_bout - time_bout_open_arm
+        distance_bout_closed_arm = distance_bout - distance_bout_open_arm
+        print "Bouts in s in closed arm\t", time_bout_closed_arm
+        print "Speed in closed arm\t", (distance_bout_closed_arm/self.conversion)/time_bout_closed_arm
+# (c) number of such bouts
+        print "# of bouts\t", number_of_bouts
