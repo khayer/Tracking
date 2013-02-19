@@ -150,7 +150,7 @@ class Target:
 
     def run(self):
 
-        
+
 
         frame = cv.QueryFrame(self.capture)
         cv.ShowImage("Original",frame)
@@ -168,7 +168,8 @@ class Target:
         time_on_open_arm = 0
         start = 0
         end = 0
-        number_of_transitions = 0
+        number_of_transitions_open_closed = 0
+        number_of_transitions_closed_open = 0
         distance_open_arm = 0
 
         first = True
@@ -330,6 +331,7 @@ class Target:
                             is_open_arm = False
                             end = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                             time_on_open_arm += (end-start) / 1000
+                            number_of_transitions_open_closed += 1
                 else:
                     storage2 = cv.CreateMemStorage(0)
                     contour2 = cv.FindContours(tmp_image_open_arms, storage2, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE)
@@ -338,7 +340,7 @@ class Target:
                         if area > self.mouse_area[1] and not cv.FindContours(tmp_image_closed_arms, storage2, cv.CV_RETR_CCOMP, cv.CV_CHAIN_APPROX_SIMPLE):
                             is_open_arm = True
                             start = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
-                            number_of_transitions += 1
+                            number_of_transitions_closed_open += 1
 
 
 
@@ -401,7 +403,7 @@ class Target:
             if l%2==0:
                stderr.write("\r[%-50s] %d%%" % ('='*int(l), percent))
                stderr.flush()
-            c = cv.WaitKey(10) 
+            c = cv.WaitKey(10)
             #if (c != -1):
                 #if (ord(c) == 27):
             # does not work...:
@@ -411,18 +413,18 @@ class Target:
                 print " "
                 print "Up to now: "
                 print "total distance traveled in pixel\t", distance
-                print "total length of experiment\t", total_time 
+                print "total length of experiment\t", total_time
                 print "average-speed of travel in s in pixel per second\t", distance/total_time
                 print "--- Closed arm ----------------------------------------"
-                print "distance on closed arm\t", distance - distance_open_arm 
-                print "s spent on closed arm\t", total_time - time_on_open_arm 
-                print "speed in pixel per second\t", (distance - distance_open_arm) / (total_time - time_on_open_arm) 
+                print "distance on closed arm\t", distance - distance_open_arm
+                print "s spent on closed arm\t", total_time - time_on_open_arm
+                print "speed in pixel per second\t", (distance - distance_open_arm) / (total_time - time_on_open_arm)
                 #print distance / 108.78 , " inches"
                 #print (distance / 108.78) * 2.54 , " cm"
                 print "--- Open arm ----------------------------------------"
-                print "transitions from closed->open\t", number_of_transitions 
-                print "distance on open arm\t", distance_open_arm 
-                print "s spent on open arm\t", time_on_open_arm 
+                print "transitions from closed->open\t", number_of_transitions
+                print "distance on open arm\t", distance_open_arm
+                print "s spent on open arm\t", time_on_open_arm
                 if time_on_open_arm == 0:
                     print "Speed in open arm not available"
                 else:
@@ -448,19 +450,23 @@ class Target:
         stderr.write("\r[%-50s] %d%%\n" % ('='*50, 100))
         #stdout.flush()
         print "total distance traveled in pixel\t", distance/self.conversion
-        print "total length of experiment\t", total_time 
+        print "total length of experiment\t", total_time
         print "average-speed of travel in s in pixel per second\t", (distance/self.conversion)/total_time
         print "--- Closed arm ----------------------------------------"
         print "distance on closed arm\t", (distance - distance_open_arm)/self.conversion
-        print "s spent on closed arm\t", total_time - time_on_open_arm 
-        print "speed in pixel per second\t", ((distance - distance_open_arm)/self.conversion) / (total_time - time_on_open_arm) 
+        print "s spent on closed arm\t", total_time - time_on_open_arm
+        print "speed in pixel per second\t", ((distance - distance_open_arm)/self.conversion) / (total_time - time_on_open_arm)
         #print distance / 108.78 , " inches"
         #print (distance / 108.78) * 2.54 , " cm"
         print "--- Open arm ----------------------------------------"
-        print "transitions from closed->open\t", number_of_transitions 
-        print "distance on open arm\t", distance_open_arm/self.conversion 
-        print "s spent on open arm\t", time_on_open_arm 
+        print "distance on open arm\t", distance_open_arm/self.conversion
+        print "s spent on open arm\t", time_on_open_arm
         if time_on_open_arm == 0:
             print "Speed in open arm not available"
         else:
             print "speed in pixel per second\t", (distance_open_arm/self.conversion) / time_on_open_arm
+        print "--- Transitions ----------------------------------------"
+        print "transitions from closed->open\t", number_of_transitions_closed_open
+        print "transitions from open->closed\t", number_of_transitions_open_closed
+        print "--- Bouts ----------------------------------------"
+        print
