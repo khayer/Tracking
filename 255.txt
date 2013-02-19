@@ -1,1 +1,0 @@
-Namespace(image='/Users/kat/Downloads/Tracking2/01_color_image.png', picture=None, sum=None, video='/Users/kat/Downloads/Material for Tracking/mouse1.m4v')
