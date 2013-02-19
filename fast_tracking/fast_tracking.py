@@ -79,7 +79,7 @@ class Target:
             cv.Dilate(black_mouse, black_mouse, None, 7)
             cv.Erode(black_mouse, black_mouse, None, 4)
 
-            #cv.ShowImage("Mouse Color Rendered", black_mouse)
+            cv.ShowImage("Mouse Color Rendered", black_mouse)
 
             #cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
             #cv.Erode(black_mouse, black_mouse, None, 4)
@@ -106,7 +106,7 @@ class Target:
             #cv.And(grey_image, black_mouse, grey_image)
             # Convert the image to black and white.
             cv.Threshold(grey_image, grey_image, 90, 255, cv.CV_THRESH_BINARY)
-            #cv.ShowImage("Only Movement", grey_image)
+            cv.ShowImage("Only Movement", grey_image)
             # Dilate and erode to get people blobs
             cv.And(grey_image, black_mouse, grey_image)
             cv.ShowImage("Mix",grey_image)
@@ -239,6 +239,8 @@ class Target:
         frame_number = 0
         percent_in_video = 0
         #while percent_in_video < 1:
+        #print self._numframes
+        counter_for_bouts = 0
         while frame_number < self._numframes:
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             color_image = cv.QueryFrame(self.capture)
@@ -362,7 +364,11 @@ class Target:
                     dist = abs(array(center_point)-array(center_point_old))
                     if math.sqrt(dist[0]*dist[1]) > 2.0:
                         distance += math.sqrt(dist[0]*dist[1])
-                        cv.Circle(color_image, center_point, 10, color, -1)
+                        counter_for_bouts += 1
+                        if counter_for_bouts > 3:
+                            cv.Circle(color_image, center_point, 10, color, -1)
+                    else:
+                        counter_for_bouts = 0
 
                     cv.ShowImage("Target", color_image)
 
