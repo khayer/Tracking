@@ -171,12 +171,12 @@ class Target:
         number_of_transitions_open_closed = 0
         number_of_transitions_closed_open = 0
         distance_open_arm = 0
-        start_bouts = 0
+        start_bouts = 500
         end_bouts = 0
         time_bout = 0
         distance_bout = 0
         distance_bout_open_arm = 0
-        start_bouts_open_arm = 0
+        start_bouts_open_arm = 400
         end_bouts_open_arm = 0
         time_bout_open_arm = 0
 
@@ -396,8 +396,10 @@ class Target:
                             time_bout += (end_bouts-start_bouts) / 1000
                             end_bouts_open_arm = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                             time_dummy = (end_bouts_open_arm - start_bouts_open_arm)
-                            if time_dummy > 0:
+                            if start_bouts_open_arm == start_bouts :
                                 time_bout_open_arm += time_dummy / 1000
+                            else:
+                                start_bouts_open_arm = 400
                         bout_starts = True
 
                     cv.ShowImage("Target", color_image)
@@ -501,11 +503,13 @@ class Target:
 #  for zero maze - we can threshold time at 0.25sec. So any contiguous movement for longer than 0.25 sec will be recorded separately - these are called bouts/ambulatory movements. So for each bout recorded we can have the typical parameters like
 # (a) in open/closed arm
 # (b) average speed during that bout
-        print "Bouts in s in open arm\t", time_bout_open_arm
-        print "Speed in open arm\t", (distance_bout_open_arm/self.conversion)/time_bout_open_arm
-        time_bout_closed_arm = time_bout - time_bout_open_arm
-        distance_bout_closed_arm = distance_bout - distance_bout_open_arm
-        print "Bouts in s in closed arm\t", time_bout_closed_arm
-        print "Speed in closed arm\t", (distance_bout_closed_arm/self.conversion)/time_bout_closed_arm
+        print "Bouts in s in open arm\t", time_bout
+        print "Speed in open arm\t", (distance_bout / self.conversion)/time_bout
+        #print "Bouts in s in open arm\t", time_bout_open_arm
+        #print "Speed in open arm\t", (distance_bout_open_arm/self.conversion)/time_bout_open_arm
+        #time_bout_closed_arm = time_bout - time_bout_open_arm
+        #distance_bout_closed_arm = distance_bout - distance_bout_open_arm
+        #print "Bouts in s in closed arm\t", time_bout_closed_arm
+        #print "Speed in closed arm\t", (distance_bout_closed_arm/self.conversion)/time_bout_closed_arm
 # (c) number of such bouts
         print "# of bouts\t", number_of_bouts
