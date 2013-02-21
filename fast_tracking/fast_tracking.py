@@ -535,11 +535,10 @@ class Target:
             #if (c != -1):
                 #if (ord(c) == 27):
             # does not work...:
-            if c != -1:
+            if c == 27:
                 end_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                 total_time = (end_total-start_total) / 1000
-                stderr.write("\r[%-50s] %d%%\n" % ('='*50, 100))
-                #stdout.flush()
+                print "------ Until now:"
                 print "total distance traveled in pixel\t", distance/self.conversion
                 print "total length of experiment\t", total_time
                 print "average-speed of travel in s in pixel per second\t", (distance/self.conversion)/total_time
@@ -547,8 +546,6 @@ class Target:
                 print "distance on closed arm\t", (distance - distance_open_arm)/self.conversion
                 print "s spent on closed arm\t", total_time - time_on_open_arm
                 print "speed in pixel per second\t", ((distance - distance_open_arm)/self.conversion) / (total_time - time_on_open_arm)
-                #print distance / 108.78 , " inches"
-                #print (distance / 108.78) * 2.54 , " cm"
                 print "--- Open arm ----------------------------------------"
                 print "distance on open arm\t", distance_open_arm/self.conversion
                 print "s spent on open arm\t", time_on_open_arm
@@ -560,29 +557,13 @@ class Target:
                 print "transitions from closed->open\t", number_of_transitions_closed_open
                 print "transitions from open->closed\t", number_of_transitions_open_closed
                 print "--- Bouts ----------------------------------------"
-#  for       zero maze - we can threshold time at 0.25sec. So any contiguous movement for longer than 0.25 sec will be recorded separately - these are called bouts/ambulatory movements. So for each bout recorded we can have the typical parameters like
-# (a)       in open/closed arm
-# (b)       average speed during that bout
                 print "Bouts in s in open arm\t", time_bout
-                print "Speed in open arm\t", (distance_bout / self.conversion)/time_bout
-                #print "Bouts in s in open arm\t", time_bout_open_arm
-                #print "Speed in open arm\t", (distance_bout_open_arm/self.conversion)/time_bout_open_arm
-                #time_bout_closed_arm = time_bout - time_bout_open_arm
-                #distance_bout_closed_arm = distance_bout - distance_bout_open_arm
-                #print "Bouts in s in closed arm\t", time_bout_closed_arm
-                #print "Speed in closed arm\t", (distance_bout_closed_arm/self.conversion)/time_bout_closed_arm
-# (c)       number of such bouts
+                if time_bout == 0:
+                    print "Speed in open arm not available"
+                else:
+                    print "Speed in open arm\t", (distance_bout / self.conversion)/time_bout
                 print "# of bouts\t", number_of_bouts
                 break
-
-            #    print distance, " pixel"
-            #    print distance / 108.78 , " inches"
-            #    print (distance / 108.78) * 2.54 , " cm"
-            #    print time_on_open_arm , " s spent on open arm"
-            #    print number_of_transitions , " transitions from closed->open"
-            #    print distance_open_arm , " distance on open arm"
-            #    print distance_open_arm / time_on_open_arm, " speed in pixel per second"
-            #    break
 
         if is_open_arm:
             end = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
@@ -592,7 +573,6 @@ class Target:
         total_time = (end_total-start_total) / 1000
 
         stderr.write("\r[%-50s] %d%%\n" % ('='*50, 100))
-        #stdout.flush()
         print "total distance traveled in pixel\t", distance/self.conversion
         print "total length of experiment\t", total_time
         print "average-speed of travel in s in pixel per second\t", (distance/self.conversion)/total_time
