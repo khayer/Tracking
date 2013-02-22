@@ -424,7 +424,7 @@ class Target:
 
                     cv.ShowImage("Target", color_image)
 
-                if is_open_arm:
+                if is_open_arm and point1 != (0,0):
                     if math.sqrt(dist[0]*dist[1]) > 2.0:
                         distance_open_arm += math.sqrt(dist[0]*dist[1])
                 if center_point == (0,0):
