@@ -54,7 +54,6 @@ class Target:
         hsv = cv.CreateImage(self.size, 8, 3)
         sat = cv.CreateImage(self.size, 8, 1)
         black_mouse = cv.CreateImage(self.size, 8, 1)
-        imggray = cv.CreateImage(self.size, 8, 1)
         #split image into hsv, grab the sat
         cv.CvtColor(self.image, hsv, cv.CV_BGR2HSV)
         #cv.ShowImage("HAHA", hsv)
@@ -287,64 +286,16 @@ class Target:
         center_point_old = (0,0)
         center_point = (0,0)
 
-######## Define open arms area
-
-        size = frame_size
-
         cv.Smooth(self.image, self.image, cv.CV_GAUSSIAN, 1, 0)
-        open_arms = cv.CreateImage(size, 8, 1)
-        red = cv.CreateImage(size, 8, 1)
-        hsv = cv.CreateImage(size, 8, 3)
-        sat = cv.CreateImage(size, 8, 1)
-        black_mouse = cv.CreateImage(size, 8, 1)
-        imggray = cv.CreateImage(size, 8, 1)
-
-
-        #split image into hsv, grab the sat
-        cv.CvtColor(self.image, hsv, cv.CV_BGR2HSV)
-        #cv.ShowImage("HAHA", hsv)
-        cv.Split(hsv, None, sat, None, None)
-        #cv.ShowImage("HIHI", sat)
-
-        #split image into rgb
-        cv.Split(self.image, None, None, red, None)
-        #cv.ShowImage("HEHE", red)
-
-        #find the car by looking for red, with high saturation
-        cv.Threshold(red, red, 128, 255, cv.CV_THRESH_BINARY)
-        #cv.ShowImage("HOHO", red)
-        cv.Threshold(sat, sat, 128, 255, cv.CV_THRESH_BINARY)
-
-        cv.Mul(red, sat, open_arms)
-
-######## Define closed area
-
-        closed_arms = cv.CreateImage(size, 8, 1)
-        blue = cv.CreateImage(size, 8, 1)
-        hsv = cv.CreateImage(size, 8, 3)
-        sat = cv.CreateImage(size, 8, 1)
-
-
-
-        #split image into hsv, grab the sat
-        cv.CvtColor(self.image, hsv, cv.CV_BGR2HSV)
-        cv.Split(hsv, None, sat, None, None)
-
-        #split image into rgb
-        cv.Split(self.image, blue, None, None, None)
-
-        #find the car by looking for red, with high saturation
-        cv.Threshold(blue, blue, 128, 255, cv.CV_THRESH_BINARY)
-        cv.Threshold(sat, sat, 128, 255, cv.CV_THRESH_BINARY)
-
-        #AND the two thresholds, finding the car
-        cv.Mul(blue, sat, closed_arms)
-        
+        open_arms = cv.CreateImage(self.size, 8, 1)
+        red = cv.CreateImage(self.size, 8, 1)
+        hsv = cv.CreateImage(self.size, 8, 3)
+        sat = cv.CreateImage(self.size, 8, 1)
+        black_mouse = cv.CreateImage(self.size, 8, 1)
+       
 
         frame_number = 0
         percent_in_video = 0
-        #while percent_in_video < 1:
-        #print self._numframes
         counter_for_bouts = 0
         number_of_bouts = 0
         bout_starts = True
@@ -354,9 +305,6 @@ class Target:
             color_image = cv.QueryFrame(self.capture)
             percent_in_video = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_AVI_RATIO)
             frame_number += 2
-            #print percent_in_video
-            #k = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
-            #print k
 
             cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
             #cv.Erode(black_mouse, black_mouse, None, 1)
@@ -366,21 +314,12 @@ class Target:
             cv.Erode(black_mouse, black_mouse, None, 4)
 
             # Smooth to get rid of false positives
-            cv.Smooth(color_image, color_image, cv.CV_GAUSSIAN, 3, 0)
+            cv.Smooth(color_image, color_image, cv.CV_GAUSSIAN, 7, 7)
 
             if first:
                 difference = cv.CloneImage(color_image)
-                #temp = cv.CloneImage(color_image)
-                #cv.ConvertScale(color_image, moving_average, 1.0, 0.0)
                 first = False
-            #else:
-            #    cv.RunningAvg(color_image, moving_average, 0.0005, None)
-
-            # Convert the scale of the moving average.
-            #cv.ConvertScale(moving_average, temp, 1.0, 0.0)
-
-            # Minus the current frame from the moving average.
-            #cv.AbsDiff(color_image, temp, difference)
+        
             cv.AbsDiff(color_image, self.background, difference)
             cv.ShowImage("difference", difference)
             # Convert the image to grayscale.
@@ -403,18 +342,10 @@ class Target:
             # Draw Contour
             cv.DrawContours(color_image,contour,cv.CV_RGB(255,255,0),cv.CV_RGB(50,203,60),1)
             contour3 = contour
-            #print len(contour3)
 
             if contour and len(contour) > 1:
-                #points = []
-                #for (x,y) in contour3:
-                #    print (x,y)
-                #    points += [(x,y)]
-
                 # Points furthest away from each other
-                #print itertools.combinations(points, 2)
                 max_pair = max(itertools.combinations(contour, 2), key=self.distance_func)
-                #print max_pair
                 cv.Line(color_image,max_pair[0],max_pair[1],cv.CV_RGB(255,255,0))
                 nose_coord = self.where_is_the_nose(max_pair,grey_image)
                 cv.Circle(color_image, nose_coord, 3, cv.CV_RGB(255,0,0), 1)
@@ -450,13 +381,8 @@ class Target:
                             start = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                             number_of_transitions_closed_open += 1
 
-
-
             if len(points):
-
-
                 point5 = reduce(lambda a, b: ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), points)
-                # ==> 1
                 if point1 != (0,0):
                     x = (point1[0] + point2[0] + point3[0] + point4[0] + point5[0]) / 5
                     y = (point1[1] + point2[1] + point3[1] + point4[1] + point5[1]) / 5
@@ -465,12 +391,9 @@ class Target:
                         color = cv.CV_RGB(255,0,0)
                     else:
                         color = cv.CV_RGB(255, 255, 255)
-                    #cv.Circle(color_image, center_point, 40, cv.CV_RGB(255, 255, 255), 1)
-                    #cv.Circle(color_image, center_point, 30, cv.CV_RGB(255, 100, 0), 1)
-                    #cv.Circle(color_image, center_point, 20, color, 1)
+
                     cv.Circle(color_image, center_point, 10, color, 1)
-                    #cv.Circle(color_image, (0,100), 10, cv.CV_RGB(255, 100, 0), 1)
-                    # ==> 4)
+
                     dist = abs(array(center_point)-array(center_point_old))
                     if math.sqrt(dist[0]*dist[1]) > 3.0:
                         distance += math.sqrt(dist[0]*dist[1])
@@ -504,7 +427,6 @@ class Target:
                 if is_open_arm:
                     if math.sqrt(dist[0]*dist[1]) > 2.0:
                         distance_open_arm += math.sqrt(dist[0]*dist[1])
-
                 if center_point == (0,0):
                     center_point_old = point5
                 else:
@@ -514,27 +436,20 @@ class Target:
                 point3 = point4
                 point4 = point5
 
-            #if k == 100:
-            #    exit()
-
             # Problems to solve:
             # 1) Time spent on the open arm
             # 2) No. of transitions from closed arm
             # 3) Speed of the mouse in the open arm
             # 4) Total distance traveled
 
-
-            #k += 1
-            # Listen for ESC key
             percent = int(percent_in_video * 100)
             l = int(percent_in_video * 100 / 2)
             if l%2==0:
                stderr.write("\r[%-50s] %d%%" % ('='*int(l), percent))
                stderr.flush()
-            c = cv.WaitKey(10)
-            #if (c != -1):
-                #if (ord(c) == 27):
-            # does not work...:
+
+            # Listen for ESC key
+            c = cv.WaitKey(5)
             if c == 27:
                 end_total = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                 total_time = (end_total-start_total) / 1000
