@@ -93,10 +93,9 @@ class Target:
         #cv.SaveImage('test_close.png',self.closed_arm)
         #cv.SaveImage('test_open.png',self.open_arm)
         cv.Dilate(mix_open_closed, mix_open_closed, None, 10)
-        cv.SaveImage('test_eroded.png',mix_open_closed)
-        cv.Erode(mix_open_closed, mix_open_closed, None, 15)
-        cv.SaveImage('test_mix.png',mix_open_closed)
-        #exit()
+        #cv.SaveImage('test_eroded.png',mix_open_closed)
+        cv.Erode(mix_open_closed, mix_open_closed, None, 10)
+        #cv.SaveImage('test_mix.png',mix_open_closed)
         return mix_open_closed
 
 

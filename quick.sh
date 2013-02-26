@@ -1,4 +1,4 @@
-for i in {5..20}
+for i in {1..20}
 do
-  python zero_maze ../Downloads/Material\ for\ Tracking/mouse$i.m4v ../Downloads/Material\ for\ Tracking/foo.png > mouse$i.txt
+  python zero_maze ../Downloads/Material\ for\ Tracking/mouse$i.m4v mouse_foo.png > /Users/kat/Desktop/results_anand/mouse$i.txt
 done
