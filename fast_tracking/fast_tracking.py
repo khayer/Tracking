@@ -10,8 +10,12 @@ class Target:
         self.capture = cv.CaptureFromFile(video)
         self.image = cv.LoadImageM(image)
         self._numframes = cv.GetCaptureProperty(self.capture,
-            cv.CV_CAP_PROP_FRAME_COUNT) 
-        self.length_cali = 500    
+            cv.CV_CAP_PROP_FRAME_COUNT)
+        print >> stderr, self._numframes
+        self.fps = cv.GetCaptureProperty(self.capture,
+            cv.CV_CAP_PROP_FPS)
+        print >> stderr, self.fps
+        self.length_cali = 500
         self.size = cv.GetSize(cv.QueryFrame(self.capture))
         self.background = self.get_background(video)
         self.open_arm = self.get_open_arm()
@@ -30,7 +34,7 @@ class Target:
         print >> stderr, "background start"
         for i in range(1,self.length_cali):
             _,frame = capture.read()
-            cv2.accumulateWeighted(frame,average,0.01)        
+            cv2.accumulateWeighted(frame,average,0.01)
             background = cv2.convertScaleAbs(average)
             cv2.imshow('background',background)
             k = cv2.waitKey(1)
@@ -161,6 +165,8 @@ class Target:
         return [mean(areas)/5,mean(areas)+std(areas)]
 
     def run(self):
+        threshold_bout = 9
+
         frame = cv.QueryFrame(self.capture)
         cv.ShowImage("Original",frame)
         k = cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 0)
@@ -226,7 +232,7 @@ class Target:
             if first:
                 difference = cv.CloneImage(color_image)
                 first = False
-        
+
             cv.AbsDiff(color_image, self.background, difference)
             cv.ShowImage("difference", difference)
             # Convert the image to grayscale.
@@ -305,7 +311,7 @@ class Target:
                     if math.sqrt(dist[0]*dist[1]) > 3.0:
                         distance += math.sqrt(dist[0]*dist[1])
                         counter_for_bouts += 1
-                        if counter_for_bouts > 4:
+                        if counter_for_bouts > threshold_bout:
                             cv.Circle(color_image, center_point, 10, color, -1)
                             distance_bout += math.sqrt(dist[0]*dist[1])
                             if is_open_arm:
