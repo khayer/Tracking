@@ -165,7 +165,7 @@ class Target:
         return [mean(areas)/5,mean(areas)+std(areas)]
 
     def run(self):
-        threshold_bout = 9
+        threshold_bout = 11
 
         frame = cv.QueryFrame(self.capture)
         cv.ShowImage("Original",frame)
@@ -187,6 +187,7 @@ class Target:
         start_bouts = 500
         end_bouts = 0
         time_bout = 0
+        lap_bout = []
         distance_bout = 0
         distance_bout_open_arm = 0
         start_bouts_open_arm = 400
@@ -215,6 +216,7 @@ class Target:
         bout_starts = True
 
         while frame_number < self._numframes:
+        #while frame_number < 500:
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             color_image = cv.QueryFrame(self.capture)
             percent_in_video = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_AVI_RATIO)
@@ -318,15 +320,18 @@ class Target:
                                 distance_bout_open_arm += math.sqrt(dist[0]*dist[1])
                             if bout_starts:
                                 number_of_bouts += 1
+                                lap_bout.append(0)
                                 bout_starts = False
                                 start_bouts = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                                 if is_open_arm:
                                     start_bouts_open_arm = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
+                            lap_bout[-1] = lap_bout[-1] + 1
                     else:
                         counter_for_bouts = 0
                         if not bout_starts:
                             end_bouts = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                             time_bout += (end_bouts-start_bouts) / 1000
+                            lap_bout[-1] = lap_bout[-1] + 1
                             end_bouts_open_arm = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC)
                             time_dummy = (end_bouts_open_arm - start_bouts_open_arm)
                             if start_bouts_open_arm == start_bouts :
@@ -385,6 +390,8 @@ class Target:
                 else:
                     print "Speed in open arm\t", (distance_bout / self.conversion)/time_bout
                 print "# of bouts\t", number_of_bouts
+                print "lap_bout:"
+                print "\t".join(map(str,lap_bout))
                 break
 
         if is_open_arm:
@@ -415,3 +422,5 @@ class Target:
         print "Bouts in s in open arm\t", time_bout
         print "Speed in open arm\t", (distance_bout / self.conversion)/time_bout
         print "# of bouts\t", number_of_bouts
+        print "lap_bout:"
+        print "\t".join(map(str,lap_bout))
