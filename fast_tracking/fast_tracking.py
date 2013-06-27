@@ -165,7 +165,7 @@ class Target:
         return [mean(areas)/5,mean(areas)+std(areas)]
 
     def run(self):
-        threshold_bout = 11
+        threshold_bout = 5
 
         frame = cv.QueryFrame(self.capture)
         cv.ShowImage("Original",frame)
