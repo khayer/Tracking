@@ -32,11 +32,12 @@ class Target:
         _,frame = capture.read()
         average = float32(frame)
         print >> stderr, "background start"
-        for i in range(1,self.length_cali):
+        for i in range(1,self.length_cali/2):
             _,frame = capture.read()
             cv2.accumulateWeighted(frame,average,0.01)
             background = cv2.convertScaleAbs(average)
             cv2.imshow('background',background)
+            cv2.imwrite('background.png',background)
             k = cv2.waitKey(1)
             percent = i/(self.length_cali/100)
             l = int(percent/2)
@@ -112,6 +113,7 @@ class Target:
         cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 30000)
         color_image = cv.CreateImage(frame_size, 8, 3)
         grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
+        grey_image2 = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
         moving_average = cv.CreateImage(frame_size, cv.IPL_DEPTH_32F, 3)
         black_mouse = cv.CreateImage(frame_size, 8, 1)
         first = True
@@ -119,7 +121,9 @@ class Target:
         for i in range(1,self.length_cali):
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
             color_image = cv.QueryFrame(self.capture)
-            cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
+            cv.CvtColor(color_image, grey_image2, cv.CV_RGB2GRAY)
+            cv.ShowImage("Mouse Color 0",grey_image2)
+            cv.InRangeS(grey_image2,cv.Scalar(0,0,0),cv.Scalar(30,30,30),black_mouse) # Select a range of blue color
             cv.ShowImage("Mouse Color 1",black_mouse)
             cv.And(black_mouse,self.zero_maze,black_mouse)
             cv.ShowImage("Mouse Color 2",black_mouse)
@@ -175,6 +179,7 @@ class Target:
         # Preparing files
         color_image = cv.CreateImage(frame_size, 8, 3)
         grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
+        grey_image2 = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
         moving_average = cv.CreateImage(frame_size, cv.IPL_DEPTH_32F, 3)
         tmp_image_open_arms = cv.CreateImage(frame_size, 8, 1)
         tmp_image_closed_arms = cv.CreateImage(frame_size, 8, 1)
@@ -220,9 +225,11 @@ class Target:
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             color_image = cv.QueryFrame(self.capture)
             percent_in_video = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_AVI_RATIO)
-            frame_number += 2
+            frame_number = frame_number + 2
 
-            cv.InRangeS(color_image,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
+            cv.CvtColor(color_image, grey_image2, cv.CV_RGB2GRAY)
+
+            cv.InRangeS(grey_image2,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
             cv.And(black_mouse,self.zero_maze,black_mouse)
             cv.Erode(black_mouse, black_mouse, None, 1)
             cv.Dilate(black_mouse, black_mouse, None, 7)
@@ -340,7 +347,7 @@ class Target:
                                 start_bouts_open_arm = 400
                         bout_starts = True
 
-                    cv.ShowImage("Target", color_image)
+
 
                 if is_open_arm and point1 != (0,0):
                     if math.sqrt(dist[0]*dist[1]) > 2.0:
@@ -353,6 +360,8 @@ class Target:
                 point2 = point3
                 point3 = point4
                 point4 = point5
+
+            cv.ShowImage("Target", color_image)
 
             percent = int(percent_in_video * 100)
             l = int(percent_in_video * 100 / 2)
