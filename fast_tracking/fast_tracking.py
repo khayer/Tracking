@@ -27,7 +27,7 @@ class Target:
         self.closed_arm = self.get_closed_arm()
         self.zero_maze = self.get_zeromaze()
         self.mouse_area = self.get_mouse_area()
-        self.conversion = 17.75
+        self.conversion = 19.75
         print >> stderr, self.mouse_area
         if xls_sheet:
             self.xls_sheet = xls_sheet
@@ -133,7 +133,7 @@ class Target:
         for i in range(1,self.length_cali):
         #while frame_number < self._numframes:
         #while frame_number < 500:
-            frame_number = i * self.increaser + self.fps * 30
+            frame_number = i * self.increaser + self.fps * 45
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
             color_image = cv.QueryFrame(self.capture)
@@ -185,6 +185,7 @@ class Target:
         return [mean(areas)/5,mean(areas)+std(areas)]
 
     def run(self):
+        #threshold_bout = 5
         threshold_bout = 5
 
         frame = cv.QueryFrame(self.capture)
@@ -455,7 +456,7 @@ class Target:
         r_sheet = rb.sheet_by_index(0)
         wb = copy(rb) # a writable copy (I can't read values out of this, only write to it)
         w_sheet = wb.get_sheet(0)
-        w_sheet.write(r_sheet.nrows+1,0,"Results for " + self.sample_name)
+        w_sheet.write(r_sheet.nrows+1,0,self.sample_name)
         # Video information
         w_sheet.write(r_sheet.nrows+1,1,distance/self.conversion)
         w_sheet.write(r_sheet.nrows+1,2,total_time)
