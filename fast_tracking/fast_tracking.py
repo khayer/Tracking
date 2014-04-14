@@ -3,10 +3,14 @@
 import cv, cv2, time, itertools
 from numpy import *
 from sys import *
+from xlutils.copy import copy
+from xlrd import open_workbook
+from xlwt import easyxf
 
 class Target:
 
-    def __init__(self,video,image):
+    def __init__(self,video,image,xls_sheet=None):
+        self.sample_name = video.split("/")[-1]
         self.capture = cv.CaptureFromFile(video)
         self.image = cv.LoadImageM(image)
         self._numframes = cv.GetCaptureProperty(self.capture,
@@ -15,15 +19,18 @@ class Target:
         self.fps = cv.GetCaptureProperty(self.capture,
             cv.CV_CAP_PROP_FPS)
         print >> stderr, self.fps
-        self.length_cali = 500
+        self.increaser = int(self.fps/5)
+        self.length_cali = 250
         self.size = cv.GetSize(cv.QueryFrame(self.capture))
         self.background = self.get_background(video)
         self.open_arm = self.get_open_arm()
         self.closed_arm = self.get_closed_arm()
         self.zero_maze = self.get_zeromaze()
         self.mouse_area = self.get_mouse_area()
-        self.conversion = 11.75
+        self.conversion = 17.75
         print >> stderr, self.mouse_area
+        if xls_sheet:
+            self.xls_sheet = xls_sheet
 
     ######### METHODS #########
 
@@ -32,7 +39,9 @@ class Target:
         _,frame = capture.read()
         average = float32(frame)
         print >> stderr, "background start"
-        for i in range(1,self.length_cali/2):
+        for i in range(1,self.length_cali):
+            frame_number = i * self.increaser + self.fps * 60
+            cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             _,frame = capture.read()
             cv2.accumulateWeighted(frame,average,0.01)
             background = cv2.convertScaleAbs(average)
@@ -62,6 +71,7 @@ class Target:
         cv.Threshold(red, red, 128, 255, cv.CV_THRESH_BINARY)
         cv.Threshold(sat, sat, 128, 255, cv.CV_THRESH_BINARY)
         cv.Mul(red, sat, open_arms)
+        cv.SaveImage("open_arms_test.png",open_arms)
         return open_arms
 
     def get_closed_arm(self):
@@ -78,6 +88,7 @@ class Target:
         cv.Threshold(blue, blue, 128, 255, cv.CV_THRESH_BINARY)
         cv.Threshold(sat, sat, 128, 255, cv.CV_THRESH_BINARY)
         cv.Mul(blue, sat, closed_arm)
+        cv.SaveImage("closed_arm_test.png",closed_arm)
         return closed_arm
 
     def get_zeromaze(self):
@@ -85,6 +96,7 @@ class Target:
         cv.Or(self.open_arm, self.closed_arm, mix_open_closed)
         cv.Dilate(mix_open_closed, mix_open_closed, None, 10)
         cv.Erode(mix_open_closed, mix_open_closed, None, 10)
+        cv.SaveImage("mix_open_closed_test.png",mix_open_closed)
         return mix_open_closed
 
     def distance_func(self, points):
@@ -119,11 +131,15 @@ class Target:
         first = True
         areas = zeros(self.length_cali)
         for i in range(1,self.length_cali):
+        #while frame_number < self._numframes:
+        #while frame_number < 500:
+            frame_number = i * self.increaser + self.fps * 30
+            cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
             color_image = cv.QueryFrame(self.capture)
             cv.CvtColor(color_image, grey_image2, cv.CV_RGB2GRAY)
             cv.ShowImage("Mouse Color 0",grey_image2)
-            cv.InRangeS(grey_image2,cv.Scalar(0,0,0),cv.Scalar(30,30,30),black_mouse) # Select a range of blue color
+            cv.InRangeS(grey_image2,cv.Scalar(0,0,0),cv.Scalar(100,100,100),black_mouse) # Select a range of blue color
             cv.ShowImage("Mouse Color 1",black_mouse)
             cv.And(black_mouse,self.zero_maze,black_mouse)
             cv.ShowImage("Mouse Color 2",black_mouse)
@@ -225,11 +241,11 @@ class Target:
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             color_image = cv.QueryFrame(self.capture)
             percent_in_video = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_AVI_RATIO)
-            frame_number = frame_number + 2
+            frame_number = frame_number + self.increaser
 
             cv.CvtColor(color_image, grey_image2, cv.CV_RGB2GRAY)
 
-            cv.InRangeS(grey_image2,cv.Scalar(0,0,0),cv.Scalar(4,4,4),black_mouse) # Select a range of blue color
+            cv.InRangeS(grey_image2,cv.Scalar(0,0,0),cv.Scalar(100,100,100),black_mouse) # Select a range of blue color
             cv.And(black_mouse,self.zero_maze,black_mouse)
             cv.Erode(black_mouse, black_mouse, None, 1)
             cv.Dilate(black_mouse, black_mouse, None, 7)
@@ -433,3 +449,33 @@ class Target:
         print "# of bouts\t", number_of_bouts
         print "lap_bout:"
         print "\t".join(map(str,lap_bout))
+
+        results_excel = self.xls_sheet
+        rb = open_workbook(results_excel,formatting_info=True)
+        r_sheet = rb.sheet_by_index(0)
+        wb = copy(rb) # a writable copy (I can't read values out of this, only write to it)
+        w_sheet = wb.get_sheet(0)
+        w_sheet.write(r_sheet.nrows+1,0,"Results for " + self.sample_name)
+        # Video information
+        w_sheet.write(r_sheet.nrows+1,1,distance/self.conversion)
+        w_sheet.write(r_sheet.nrows+1,2,total_time)
+        w_sheet.write(r_sheet.nrows+1,3,(distance/self.conversion)/total_time)
+        w_sheet.write(r_sheet.nrows+1,4,(distance - distance_open_arm)/self.conversion)
+        w_sheet.write(r_sheet.nrows+1,5,total_time - time_on_open_arm)
+        w_sheet.write(r_sheet.nrows+1,6,((distance - distance_open_arm)/self.conversion) / (total_time - time_on_open_arm))
+        w_sheet.write(r_sheet.nrows+1,7,distance_open_arm/self.conversion)
+        w_sheet.write(r_sheet.nrows+1,8,time_on_open_arm)
+        if time_on_open_arm == 0:
+            w_sheet.write(r_sheet.nrows+1,9,"n/a")
+        else:
+            w_sheet.write(r_sheet.nrows+1,9,(distance_open_arm/self.conversion) / time_on_open_arm)
+        w_sheet.write(r_sheet.nrows+1,10,number_of_transitions_closed_open)
+        w_sheet.write(r_sheet.nrows+1,11,number_of_transitions_open_closed)
+        w_sheet.write(r_sheet.nrows+1,12,self.fps)
+        w_sheet.write(r_sheet.nrows+1,13,time_bout)
+        w_sheet.write(r_sheet.nrows+1,14,(distance_bout / self.conversion)/time_bout)
+        w_sheet.write(r_sheet.nrows+1,15,number_of_bouts)
+        for i,f in enumerate(lap_bout):
+            w_sheet.write(r_sheet.nrows+1,i+16,f*self.increaser/ self.fps)
+
+        wb.save(results_excel)
