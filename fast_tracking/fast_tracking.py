@@ -7,6 +7,17 @@ from xlutils.copy import copy
 from xlrd import open_workbook
 from xlwt import easyxf
 
+CV_CAP_PROP_POS_MSEC = 0
+CV_CAP_PROP_POS_FRAMES = 1
+CV_CAP_PROP_POS_AVI_RATIO = 2
+CV_CAP_PROP_FRAME_WIDTH = 3
+CV_CAP_PROP_FRAME_HEIGHT = 4
+CV_CAP_PROP_FPS = 5
+CV_CAP_PROP_FOURCC = 6
+CV_CAP_PROP_FRAME_COUNT = 7
+CV_CAP_PROP_FORMAT = 8
+CV_CAP_PROP_MODE = 9
+
 class Target:
 
     def __init__(self,video,image,xls_sheet=None):
@@ -36,12 +47,13 @@ class Target:
 
     def get_background(self,video):
         capture = cv2.VideoCapture(video)
+        capture.set(CV_CAP_PROP_POS_FRAMES,int(self.fps*60))
         _,frame = capture.read()
         average = float32(frame)
         print >> stderr, "background start"
         for i in range(1,self.length_cali):
-            frame_number = i * self.increaser + self.fps * 60
-            cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
+            #frame_number = i * self.increaser + self.fps * 120
+            #cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
             _,frame = capture.read()
             cv2.accumulateWeighted(frame,average,0.01)
             background = cv2.convertScaleAbs(average)
