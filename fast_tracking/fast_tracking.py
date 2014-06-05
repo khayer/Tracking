@@ -31,6 +31,8 @@ class Target:
             cv.CV_CAP_PROP_FPS)
         print >> stderr, self.fps
         self.increaser = int(self.fps/5)
+        if self.increaser == 0:
+            self.increaser = 1
         self.length_cali = 250
         self.size = cv.GetSize(cv.QueryFrame(self.capture))
         self.background = self.get_background(video)
@@ -256,6 +258,14 @@ class Target:
             percent_in_video = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_AVI_RATIO)
             frame_number = frame_number + self.increaser
 
+            percent = int(percent_in_video * 100)
+            l = int(percent_in_video * 100 / 2)
+            if l%2==0:
+               stderr.write("\r[%-50s] %d%%" % ('='*int(l), percent))
+               stderr.flush()
+
+            if not color_image:
+                continue
             cv.CvtColor(color_image, grey_image2, cv.CV_RGB2GRAY)
 
             cv.InRangeS(grey_image2,cv.Scalar(0,0,0),cv.Scalar(100,100,100),black_mouse) # Select a range of blue color
@@ -392,11 +402,7 @@ class Target:
 
             cv.ShowImage("Target", color_image)
 
-            percent = int(percent_in_video * 100)
-            l = int(percent_in_video * 100 / 2)
-            if l%2==0:
-               stderr.write("\r[%-50s] %d%%" % ('='*int(l), percent))
-               stderr.flush()
+
 
             # Listen for ESC key
             c = cv.WaitKey(5)
