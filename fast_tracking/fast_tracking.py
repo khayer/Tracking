@@ -52,6 +52,8 @@ class Target:
         capture.set(CV_CAP_PROP_POS_FRAMES,int(self.fps*60))
         _,frame = capture.read()
         average = float32(frame)
+        cv.GetCaptureProperty(self.capture,
+            cv.CV_CAP_PROP_FPS)
         print >> stderr, "background start"
         for i in range(1,self.length_cali):
             #frame_number = i * self.increaser + self.fps * 120
@@ -63,6 +65,8 @@ class Target:
             cv2.imwrite('background.png',background)
             k = cv2.waitKey(1)
             percent = i/(self.length_cali/100)
+            print >> stderr, cv.GetCaptureProperty(self.capture,
+            cv.CV_CAP_PROP_FPS)
             l = int(percent/2)
             if l%2==0:
                stderr.write("\r[%-50s] %d%%" % ('='*int(l), percent))
@@ -136,7 +140,7 @@ class Target:
         frame = cv.QueryFrame(self.capture)
         frame_size = cv.GetSize(frame)
         # Jump 30 second into video file
-        cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 30000)
+        #cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_MSEC, 30000)
         color_image = cv.CreateImage(frame_size, 8, 3)
         grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
         grey_image2 = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
@@ -147,13 +151,17 @@ class Target:
         for i in range(1,self.length_cali):
         #while frame_number < self._numframes:
         #while frame_number < 500:
-            frame_number = i * self.increaser + self.fps * 45
+
+            frame_number = i * self.increaser + cv.GetCaptureProperty(self.capture,
+            cv.CV_CAP_PROP_FPS) * 45
             cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_FRAMES,frame_number)
+            print >> stderr, cv.GetCaptureProperty(self.capture,
+            cv.CV_CAP_PROP_FPS)
             grey_image = cv.CreateImage(frame_size, cv.IPL_DEPTH_8U, 1)
             color_image = cv.QueryFrame(self.capture)
             cv.CvtColor(color_image, grey_image2, cv.CV_RGB2GRAY)
             cv.ShowImage("Mouse Color 0",grey_image2)
-            cv.InRangeS(grey_image2,cv.Scalar(0,0,0),cv.Scalar(100,100,100),black_mouse) # Select a range of blue color
+            cv.InRangeS(grey_image2,cv.Scalar(5,5,5),cv.Scalar(100,100,100),black_mouse) # Select a range of blue color
             cv.ShowImage("Mouse Color 1",black_mouse)
             cv.And(black_mouse,self.zero_maze,black_mouse)
             cv.ShowImage("Mouse Color 2",black_mouse)
@@ -257,6 +265,7 @@ class Target:
             color_image = cv.QueryFrame(self.capture)
             percent_in_video = cv.GetCaptureProperty(self.capture, cv.CV_CAP_PROP_POS_AVI_RATIO)
             frame_number = frame_number + self.increaser
+            print >> stderr, self.fps
 
             percent = int(percent_in_video * 100)
             l = int(percent_in_video * 100 / 2)
