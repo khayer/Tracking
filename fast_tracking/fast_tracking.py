@@ -20,7 +20,7 @@ CV_CAP_PROP_MODE = 9
 
 class Target:
 
-    def __init__(self,video,image,xls_sheet=None):
+    def __init__(self,video,image,xls_sheet=None,conversion=None):
         self.sample_name = video.split("/")[-1]
         self.capture = cv.CaptureFromFile(video)
         self.image = cv.LoadImageM(image)
@@ -35,12 +35,16 @@ class Target:
             self.increaser = 1
         self.length_cali = 250
         self.size = cv.GetSize(cv.QueryFrame(self.capture))
+        print >> stderr, self.size
         self.background = self.get_background(video)
         self.open_arm = self.get_open_arm()
         self.closed_arm = self.get_closed_arm()
         self.zero_maze = self.get_zeromaze()
         self.mouse_area = self.get_mouse_area()
-        self.conversion = 19.75
+        if conversion:
+            self.conversion = conversion
+        else:
+            self.conversion = 9.8
         print >> stderr, self.mouse_area
         if xls_sheet:
             self.xls_sheet = xls_sheet

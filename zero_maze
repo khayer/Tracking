@@ -22,6 +22,8 @@ parser.add_argument('image', metavar='png',
   open and closed area in the zero maze """)
 parser.add_argument('spreadsheet', metavar='xls',
   type=perfect_path, help=""" spreadsheet for results """)
+parser.add_argument('--conversion', metavar=float,type=float,
+                    help='Conversion rate')
 parser.add_argument('--picture',
                     help='Not defined yet')
 parser.add_argument('--sum',
@@ -31,5 +33,5 @@ args = parser.parse_args()
 print args
 
 
-t = Target(args.video, args.image, args.spreadsheet)
+t = Target(args.video, args.image, args.spreadsheet,args.conversion)
 t.run()
